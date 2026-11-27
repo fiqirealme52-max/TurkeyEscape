@@ -1,7 +1,7 @@
 // GOBBLE DASH - Thanksgiving Escape. Entrypoint: copies game/ and
 // screenshots/ into the output directory and writes dossier.json
 // with buildDossier from vendor/makefun-game.ts.
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-game.ts';
@@ -9,8 +9,10 @@ import { buildDossier } from './vendor/makefun-game.ts';
 const repoRoot = dirname(fileURLToPath(import.meta.url));
 const outDir = process.env.MAKEFUN_OUTPUT_DIR || '/output';
 
-rmSync(outDir, { recursive: true, force: true });
+/* Empty the output directory WITHOUT deleting it: the grader mounts
+   /output as a directory this user cannot remove or recreate. */
 mkdirSync(outDir, { recursive: true });
+for (const entry of readdirSync(outDir)) rmSync(join(outDir, entry), { recursive: true, force: true });
 
 const gameSrc = join(repoRoot, 'game');
 const shotsSrc = join(repoRoot, 'screenshots');
