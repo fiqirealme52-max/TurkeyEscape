@@ -19,10 +19,12 @@ kitchen — and out the door to freedom.
    farmer cuts you off at the door.
 
 **How to play:** Arrow keys / A D to run, Space to jump, Shift to dash,
-S to hide in hay or behind the table, P to pause, M to mute. The farmer
-patrols, spots you in his vision cone, chases, searches your last seen
-spot, and corners you in the kitchen. Three feathers of lives, corn to
-collect, and a gate at the end of every stage.
+S to hide in hay or behind the table, E to throw a straw-turkey decoy,
+P to pause, M to mute. Corn streaks build a combo (x2 at 3, x3 at 6,
+x5 at 10); a knife or pin that whistles past is a close call (+25).
+The farmer patrols, spots you in his vision cone, chases, searches
+your last seen spot, and corners you in the kitchen. Three feathers
+of lives, corn to collect, and a gate at the end of every stage.
 
 **Play it:** open `game/index.html` in a desktop browser — no build step,
 no network, all art and sound drawn and synthesised in code.
