@@ -18,6 +18,26 @@ const Render = {
     ctx.restore();
   },
 
+  /* Straw-turkey decoys, running left to pull the farmer off. */
+  decoys(ctx) {
+    for (const d of Game.decoys) {
+      ctx.save();
+      ctx.fillStyle = '#e8b64c';
+      ctx.beginPath();
+      ctx.ellipse(d.x + 20, d.y + 22, 18, 13, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#c65a3a';
+      ctx.beginPath();
+      ctx.arc(d.x + 34, d.y + 8, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#2b1a08';
+      ctx.font = 'bold 11px Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('DECOY', d.x + 20, d.y - 6);
+      ctx.restore();
+    }
+  },
+
   hud(ctx) {
     const def = STAGE_DEFS[Game.stage];
     ctx.save();
@@ -33,6 +53,11 @@ const Render = {
     ctx.font = 'bold 21px Georgia, serif';
     ctx.textAlign = 'left';
     ctx.fillText('SCORE ' + Game.score, 14, 20);
+    if (Game.combo >= 2) {
+      ctx.fillStyle = '#ffc93c';
+      ctx.font = 'bold 17px Georgia, serif';
+      ctx.fillText('COMBO x' + Game.comboMult(), 172, 20);
+    }
     ctx.font = 'bold 15px Georgia, serif';
     ctx.fillStyle = '#ffd98a';
     ctx.fillText('DIST ' + Game.dist + 'm', 14, 46);
@@ -74,9 +99,16 @@ const Render = {
     ctx.textAlign = 'left';
     ctx.fillText(fstate, 14, 84);
 
-    /* Objective strip under the bar. */
+    /* Objective strip under the bar, with decoy status + the hero's name. */
     ctx.fillStyle = 'rgba(43,26,8,0.75)';
     ctx.fillRect(0, 96, CFG.W, 22);
+    ctx.fillStyle = Game.decoyCd <= 0 ? '#7dd069' : '#c9a86a';
+    ctx.font = 'bold 12px Georgia, serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(Game.decoyCd <= 0 ? 'DECOY [E] READY' : 'DECOY ' + Game.decoyCd.toFixed(0) + 's', 14, 107);
+    ctx.fillStyle = '#ffd98a';
+    ctx.textAlign = 'right';
+    ctx.fillText('GIBLET the turkey', CFG.W - 14, 107);
     ctx.fillStyle = '#ffe9b8';
     ctx.font = 'bold 13px Georgia, serif';
     ctx.textAlign = 'center';
@@ -87,7 +119,7 @@ const Render = {
     ctx.fillRect(0, CFG.H - 24, CFG.W, 24);
     ctx.fillStyle = '#ffe9b8';
     ctx.font = 'bold 12px Georgia, serif';
-    ctx.fillText('ARROWS / A D run    SPACE jump    SHIFT dash    S hide    M sound    P pause', CFG.W / 2, CFG.H - 12);
+    ctx.fillText('ARROWS / A D run    SPACE jump    SHIFT dash    S hide    E decoy    M sound    P pause', CFG.W / 2, CFG.H - 12);
 
     /* Center banner. */
     if (Game.bannerT > 0) {
@@ -111,6 +143,7 @@ const Render = {
     Stages.draw(ctx, Game.stage, time, Game.leaves);
     Hazards.draw(ctx, time);
     Farmer.drawCone(ctx);
+    Render.decoys(ctx);
     Turkey.draw(ctx);
     Farmer.draw(ctx);
     Render.hud(ctx);
@@ -149,7 +182,7 @@ const Render = {
     ctx.fillText('A THANKSGIVING ESCAPE', CFG.W / 2, 166);
     ctx.font = 'italic 17px Georgia, serif';
     ctx.fillStyle = '#ffd98a';
-    ctx.fillText('The farmer wants you for dinner. Run, jump, hide - and never stop gobbling.', CFG.W / 2, 196);
+    ctx.fillText('The farmer wants Giblet for dinner. Run, jump, hide - and never stop gobbling.', CFG.W / 2, 196);
 
     /* Stage list: proof the game is complete. */
     ctx.fillStyle = 'rgba(43,26,8,0.8)';
@@ -164,7 +197,7 @@ const Render = {
     ctx.fillStyle = '#fff3d6';
     ctx.font = 'bold 16px Georgia, serif';
     ctx.textAlign = 'center';
-    ctx.fillText('ARROWS run    SPACE jump    SHIFT dash    S hide in hay / behind the table', CFG.W / 2, 356);
+    ctx.fillText('ARROWS run    SPACE jump    SHIFT dash    S hide in hay / behind the table    E decoy', CFG.W / 2, 356);
     ctx.fillStyle = '#ffc93c';
     ctx.font = 'bold 22px Georgia, serif';
     const blink = Math.floor(time * 2) % 2 === 0;
@@ -186,8 +219,8 @@ const Render = {
     ctx.fillStyle = '#fff3d6';
     ctx.font = 'italic 20px Georgia, serif';
     ctx.fillText(escaped
-      ? 'You outran the farmer, the oven and the carving knife. Happy Thanksgiving!'
-      : 'The farmer serves you with cranberry sauce. The corn remembers you.', CFG.W / 2, 156);
+      ? 'Giblet outran the farmer, the oven and the carving knife. Happy Thanksgiving!'
+      : 'The farmer serves Giblet with cranberry sauce. The corn remembers him.', CFG.W / 2, 156);
 
     /* Stats table. */
     ctx.fillStyle = 'rgba(43,26,8,0.75)';
