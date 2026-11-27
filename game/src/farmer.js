@@ -36,6 +36,10 @@ const Farmer = {
       Farmer.lastSeenY = Turkey.y;
       Farmer.loseT = 0;
     }
+    /* A fresh decoy pulls him off patrol and onto the straw turkey. */
+    if (Game.decoyTarget() !== null && Farmer.state !== 'chase') {
+      Farmer.state = 'chase'; Farmer.stateT = 0;
+    }
 
     if (Farmer.state === 'patrol') {
       Farmer.vx = Farmer.dir * speed(CFG.FARMER.patrol);
@@ -47,8 +51,10 @@ const Farmer = {
         Sfx.sting();
       }
     } else if (Farmer.state === 'chase') {
+      /* A decoy pulls him off the turkey entirely. */
+      const decoyX = Game.decoyTarget();
       /* Cornering: in the kitchen, run to cut the turkey off at the door. */
-      let targetX = Turkey.x;
+      let targetX = decoyX !== null ? decoyX : Turkey.x;
       if (stageIdx === 2 && Turkey.x > 560) targetX = Math.min(Turkey.x + 95, 856);
       const d = (targetX + Turkey.w / 2) - (Farmer.x + Farmer.w / 2);
       Farmer.dir = d >= 0 ? 1 : -1;
