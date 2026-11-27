@@ -7,6 +7,7 @@ const Game = {
   stage: 0, score: 0, dist: 0, corn: 0, lives: CFG.LIVES,
   time: 0, best: 0, frozen: false,
   banner: '', bannerT: 0, shake: 0, flash: 0,
+  combo: 0, decoyCd: 0, decoys: [],
   stageClearT: 0, endReason: '', seed: 1, rng: makeRng(1),
   leaves: [], over: false,
 
@@ -25,6 +26,7 @@ const Game = {
     Game.stage = 0; Game.score = 0; Game.dist = 0; Game.corn = 0;
     Game.lives = CFG.LIVES; Game.time = 0; Game.over = false;
     Game.banner = ''; Game.bannerT = 0; Game.shake = 0; Game.flash = 0;
+    Game.combo = 0; Game.decoyCd = 0; Game.decoys = [];
     Game.leaves = [];
     for (let i = 0; i < 14; i++) {
       Game.leaves.push({ x: Game.rng() * CFG.W, y: Game.rng() * 470, v: 12 + Game.rng() * 22, r: (Game.rng() - 0.5) * 2 });
@@ -43,9 +45,50 @@ const Game = {
 
   showBanner(text, secs) { Game.banner = text; Game.bannerT = secs || 1.4; },
 
+  /* Corn streak multiplier: x2 at 3, x3 at 6, x5 at 10. Returns points. */
+  collectCorn() {
+    Game.combo += 1;
+    return CFG.CORN_SCORE * Game.comboMult();
+  },
+  comboMult() { return Game.combo >= 10 ? 5 : Game.combo >= 6 ? 3 : Game.combo >= 3 ? 2 : 1; },
+
+  /* Throw a straw-turkey decoy that runs left and pulls the farmer off. */
+  spawnDecoy() {
+    if (Game.decoyCd > 0 || Game.screen !== 'play') return;
+    Game.decoyCd = 8;
+    Game.decoys.push({ x: Turkey.x - 10, y: Turkey.y, t: 3 });
+    Sfx.gobble();
+  },
+  decoyTarget() {
+    return Game.decoys.length ? Game.decoys[0].x : null;
+  },
+
+  /* A knife or pin that whistles past without hitting: +25, once each. */
+  checkCloseCalls() {
+    for (const k of Hazards.knives) {
+      if (k.state === 'fall' && !k.closeCalled && k.y > Turkey.y + Turkey.h
+        && Math.abs((k.x + 8) - (Turkey.x + Turkey.w / 2)) < 70) {
+        k.closeCalled = true;
+        Game.score += 25;
+        Game.showBanner('CLOSE CALL! +25', 0.9);
+        Sfx.pickup();
+      }
+    }
+    for (const p of Hazards.pins) {
+      if (!p.closeCalled && ((p.vx > 0 && p.x > Turkey.x + Turkey.w + 6) || (p.vx < 0 && p.x + p.w < Turkey.x - 6))
+        && Math.abs(p.y - (Turkey.y + Turkey.h)) < 60) {
+        p.closeCalled = true;
+        Game.score += 25;
+        Game.showBanner('CLOSE CALL! +25', 0.9);
+        Sfx.pickup();
+      }
+    }
+  },
+
   loseLife(cause) {
     if (Turkey.invuln > 0 || Game.screen !== 'play') return;
     Game.lives -= 1;
+    Game.combo = 0;
     Turkey.invuln = 2.0;
     Turkey.vx = -Turkey.face * 260;
     Turkey.vy = -320;
@@ -99,6 +142,11 @@ const Game = {
 
     /* --- play --- */
     const def = STAGE_DEFS[Game.stage];
+    if (Game.decoyCd > 0) Game.decoyCd -= dt;
+    if (Input.hit('e')) Game.spawnDecoy();
+    for (const d of Game.decoys) { d.x -= 210 * dt; d.t -= dt; }
+    Game.decoys = Game.decoys.filter((d) => d.t > 0 && d.x > -60);
+    Game.checkCloseCalls();
     if ((Input.hit('s') || Input.hit('arrowdown')) && Turkey.onGround) {
       if (Turkey.tryHide(def.hides)) Sfx.gobble();
     }
@@ -111,6 +159,7 @@ const Game = {
     /* Farmer catches the turkey on touch. */
     if (Turkey.invuln <= 0 && overlap(Turkey, { x: Farmer.x + 8, y: Farmer.y + 6, w: Farmer.w - 16, h: Farmer.h - 6 })) {
       Game.lives -= 1;
+      Game.combo = 0;
       Turkey.invuln = 2.0;
       Turkey.vx = -Farmer.dir * 300;
       Turkey.vy = -340;
@@ -126,6 +175,14 @@ const Game = {
         Sfx.lose();
         return;
       }
+    }
+
+    /* Farmer reaches the decoy: he pounces on straw, then searches. */
+    if (Game.decoys.length && overlap({ x: Farmer.x, y: Farmer.y, w: Farmer.w, h: Farmer.h }, { x: Game.decoys[0].x, y: Game.decoys[0].y, w: 40, h: 38 })) {
+      Game.decoys.shift();
+      Farmer.state = 'search'; Farmer.stateT = 0;
+      Farmer.lastSeenX = Turkey.x; Farmer.lastSeenY = Turkey.y;
+      Game.showBanner('DECOY! HE FELL FOR IT!', 1.2);
     }
 
     /* Distance + trickle score while running right. */
