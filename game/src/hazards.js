@@ -53,7 +53,7 @@ const Hazards = {
     for (const c of Hazards.corns) {
       if (!c.taken && overlap(Turkey, { x: c.x - 14, y: c.y - 14, w: 28, h: 28 })) {
         c.taken = true;
-        Game.corn += 1; Game.score += CFG.CORN_SCORE;
+        Game.corn += 1; Game.score += Game.collectCorn();
         Sfx.pickup();
       }
     }
