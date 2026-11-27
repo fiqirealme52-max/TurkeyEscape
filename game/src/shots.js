@@ -31,7 +31,7 @@ const Shots = {
         { x: 700, y: 200, state: 'fall', t: 0.9, w: 16, h: 46 }
       ];
       Hazards.corns[1].taken = true;
-      Game.score = 1450; Game.dist = 320; Game.corn = 6; Game.time = 24.5;
+      Game.score = 1450; Game.dist = 320; Game.corn = 6; Game.combo = 3; Game.time = 24.5;
       Game.showBanner('SPOTTED!', 999);
       Game.frozen = true;
       return true;
@@ -42,8 +42,8 @@ const Shots = {
       Game.stage = 2;
       Game.loadStage(2);
       /* Kitchen cover: oven lit, farmer right behind the turkey, knife falling. */
-      Turkey.x = 520; Turkey.y = CFG.FLOOR - Turkey.h; Turkey.face = 1; Turkey.vx = CFG.TURKEY.run;
-      Farmer.x = 428; Farmer.dir = 1; Farmer.state = 'chase'; Farmer.spotFlash = 1;
+      Turkey.x = 500; Turkey.y = CFG.FLOOR - Turkey.h; Turkey.face = 1; Turkey.vx = CFG.TURKEY.run;
+      Farmer.x = 405; Farmer.dir = 1; Farmer.state = 'chase'; Farmer.spotFlash = 1;
       Farmer.lastSeenX = Turkey.x;
       Hazards.knives = [
         { x: 640, y: 90, state: 'fall', t: 0.6, w: 16, h: 46 },
@@ -51,7 +51,7 @@ const Shots = {
       ];
       Hazards.pins = [{ x: 240, y: CFG.FLOOR - 18, w: 34, h: 18, vx: 260, rot: 0.6 }];
       Hazards.corns[0].taken = true; Hazards.corns[1].taken = true;
-      Game.score = 3890; Game.dist = 940; Game.corn = 14; Game.time = 68.0;
+      Game.score = 3890; Game.dist = 940; Game.corn = 14; Game.combo = 5; Game.time = 68.0;
       Game.showBanner('SPOTTED!', 999);
       Game.frozen = true;
       return true;
