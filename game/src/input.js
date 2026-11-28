@@ -1,49 +1,58 @@
-'use strict';
-/* Keyboard + mouse input. Edge-triggered presses are cleared each frame. */
+// Keyboard input. Held keys in `held`; edge-triggered actions go through
+// the `onPress` callback so main.js owns all game effects.
+export function createInput() {
+  return {
+    held: { left: false, right: false, up: false },
+    left: false, right: false,
+    onPress: null, // (action) => void
+  };
+}
 
-const Input = {
-  down: {},
-  pressed: {},
-  clicked: false,
-  clickX: 0,
-  clickY: 0,
-
-  init(canvas) {
-    window.addEventListener('keydown', (e) => {
-      const k = e.key.toLowerCase();
-      if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
-      if (!Input.down[k]) Input.pressed[k] = true;
-      Input.down[k] = true;
-    });
-    window.addEventListener('keyup', (e) => { Input.down[e.key.toLowerCase()] = false; });
-    canvas.addEventListener('mousedown', (e) => {
-      const r = canvas.getBoundingClientRect();
-      Input.clickX = (e.clientX - r.left) * (CFG.W / r.width);
-      Input.clickY = (e.clientY - r.top) * (CFG.H / r.height);
-      Input.clicked = true;
-    });
-    canvas.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      const r = canvas.getBoundingClientRect();
-      const t = e.touches[0];
-      Input.clickX = (t.clientX - r.left) * (CFG.W / r.width);
-      Input.clickY = (t.clientY - r.top) * (CFG.H / r.height);
-      Input.clicked = true;
-    }, { passive: false });
-  },
-
-  /* True while the key is held. */
-  held(k) { return !!Input.down[k]; },
-
-  /* True only on the frame the key went down. */
-  hit(k) { return !!Input.pressed[k]; },
-
-  /* True on the frame the canvas was clicked/tapped. */
-  tap() { return Input.clicked; },
-
-  /* Clear edge triggers; call once per frame after update. */
-  postUpdate() {
-    Input.pressed = {};
-    Input.clicked = false;
-  }
+const KEYMAP = {
+  ArrowLeft: 'left', KeyA: 'left',
+  ArrowRight: 'right', KeyD: 'right',
+  ArrowUp: 'jump', KeyW: 'jump', Space: 'jump',
+  ShiftLeft: 'dash', ShiftRight: 'dash', KeyX: 'dash',
+  KeyS: 'hide',
+  KeyE: 'decoy',
+  KeyQ: 'burst',
+  KeyP: 'pause',
+  KeyM: 'mute',
+  KeyR: 'restart',
+  Enter: 'start',
+  KeyF: 'freerange',
+  Digit1: 'season',
+  Digit2: 'freerange',
 };
+
+export function attachInput(input) {
+  function down(e) {
+    const action = KEYMAP[e.code];
+    if (!action) return;
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'Space'].includes(e.code)) e.preventDefault();
+    if (e.repeat) return;
+    if (action === 'left') input.held.left = true;
+    if (action === 'right') input.held.right = true;
+    if (action === 'jump') input.held.up = true;
+    if (input.onPress) input.onPress(action);
+  }
+  function up(e) {
+    const action = KEYMAP[e.code];
+    if (!action) return;
+    if (action === 'left') input.held.left = false;
+    if (action === 'right') input.held.right = false;
+    if (action === 'jump') input.held.up = false;
+  }
+  window.addEventListener('keydown', down);
+  window.addEventListener('keyup', up);
+  return () => {
+    window.removeEventListener('keydown', down);
+    window.removeEventListener('keyup', up);
+  };
+}
+
+// Held keys are read every frame; single presses go through onPress so
+// jump/dash/decoy never double-fire from a held key.
+export function readHeld(input) {
+  return { left: input.held.left, right: input.held.right };
+}
