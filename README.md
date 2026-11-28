@@ -1,33 +1,43 @@
 # GOBBLE DASH — Thanksgiving Escape
 
-[![make.fun · turkey-run-game-01](https://make.fun/badge/turkey-run-game-01.svg)](https://make.fun/bounty/turkey-run-game-01?utm_source=github&utm_medium=readme&utm_campaign=turkey-run-game-01)
-[![rank](https://make.fun/badge/turkey-run-game-01/fiqirealme52-max/TurkeyEscape/rank.svg)](https://make.fun/bounty/turkey-run-game-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=turkey-run-game-01)
-[![reward](https://make.fun/badge/turkey-run-game-01/fiqirealme52-max/TurkeyEscape/reward.svg)](https://make.fun/bounty/turkey-run-game-01?utm_source=github&utm_medium=readme&utm_campaign=turkey-run-game-01)
+R3 revision (28 Nov 2026): 6 stages / 2400m, 6 perks, 12 feats, 2 endings,
+endless Free Range, 2 farmers (Silas + Opal), stamina + corn economy,
+Thanksgiving Countdown, drawn escape route, near-miss cover beat.
 
-A turkey escape game for the make.fun **turkey-run-game-01** bounty.
-Thanksgiving is coming and the farmer wants you for dinner. Run, jump,
-dash and hide your way from the farmyard, through the barn, into the
-kitchen — and out the door to freedom.
+[![GOBBLE DASH — Thanksgiving Escape](https://make.fun/badge/turkey-run-game-01.svg)](https://make.fun/bounty/turkey-run-game-01?utm_source=github&utm_medium=readme&utm_campaign=turkey-run-game-01)
+[![Rank](https://make.fun/badge/turkey-run-game-01/fiqirealme52-max/TurkeyEscape/rank.svg)](https://make.fun/bounty/turkey-run-game-01?utm_source=github&utm_medium=readme&utm_campaign=turkey-run-game-01)
+[![Reward](https://make.fun/badge/turkey-run-game-01/fiqirealme52-max/TurkeyEscape/reward.svg)](https://make.fun/bounty/turkey-run-game-01?utm_source=github&utm_medium=readme&utm_campaign=turkey-run-game-01)
 
-**Three stages, one very hungry farmer:**
+Giblet the turkey has one hour before Thanksgiving dinner — and the farmers
+know it. Run 2400m through the farmyard, the barn, the kitchen, the forest,
+the cornfield and the pumpkin patch, dodge 450F ovens and falling carving
+knives, hide in the hay, and reach the gate before Silas and Opal catch you.
 
-1. **Farmyard** — the farmer patrols the fence line, carving knives rain
-   from the sky, corn is everywhere.
-2. **Barn** — hide in the haystacks while he runs now, and watch for
-   rolling pins.
-3. **Kitchen** — the oven is lit at 450F, knives fall faster, and the
-   farmer cuts you off at the door.
+## What is in this game
 
-**How to play:** Arrow keys / A D to run, Space to jump, Shift to dash,
-S to hide in hay or behind the table, E to throw a straw-turkey decoy,
-P to pause, M to mute. Corn streaks build a combo (x2 at 3, x3 at 6,
-x5 at 10); a knife or pin that whistles past is a close call (+25).
-The farmer patrols, spots you in his vision cone, chases, searches
-your last seen spot, and corners you in the kitchen. Three feathers
-of lives, corn to collect, and a gate at the end of every stage.
+- **6 stages, 2400m** — Farmyard, Barn, Kitchen, Forest, Cornfield, Pumpkin Patch
+- **6 perks** — Corn Boots, Featherweight, Second Wind, Hay Magnet, Butter Grease, Lucky Wishbone (one per stage clear, each with its corn cost shown)
+- **12 feats** — First Flight, Hay Ghost, Marathon, Close Call x5, Corn Hoarder, Decoy Master, Ghost Run, Oven Dodger, Knife Dancer, Speedy, Perk Collector, Free Bird
+- **2 endings** — ESCAPED, or PARDONED (Ghost Escape: a full run never once spotted, +1000)
+- **Endless Free Range** — loop stages 3–6, farmers 10% faster every loop
+- **2 farmers** — Silas (pitchfork) and Opal (rolling pin), each with a 5-state AI: patrol, spot, chase, search, corner, plus a named roster panel and an alert meter (TENANG / WASPADA / MENCARI / TERKUNCI)
+- **Stamina + corn economy** — dash costs 25 stamina, corn restores 10; Corn Burst [Q] costs 5 corn; decoy [E] is free; the Golden Gobbler target is worth 500 corn
+- **Thanksgiving Countdown** — entering the kitchen starts the countdown: farmers 1.25x faster, more knives, +2000 if you survive
+- **Drawn escape route + batching** — dashed route with numbered waypoints, a route bar (next gate, stops, ETA), and batch callouts like "1 dash · 3 corn"
+- **Double jump, hide, decoy, dash, pause, mute, restart** — all with on-screen controls and sounds made in code (no audio assets)
 
-**Play it:** open `game/index.html` in a desktop browser — no build step,
-no network, all art and sound drawn and synthesised in code.
+## Controls
 
-**Screenshots:** `?shot=start` title · `?shot=play` farmyard chase ·
-`?shot=kitchen` kitchen escape (cover) · `?shot=end` escaped debrief.
+Arrows / A D — run · Space / W — jump (twice = double jump) · Shift / X — dash (25 stamina) · S — hide in hay · E — straw decoy (free, 8s) · Q — Corn Burst (5 corn) · P — pause · M — mute · R — restart · 1 — Season · 2 — Free Range
+
+## How to run
+
+Serve the `game/` folder and open `index.html`, for example:
+
+```
+python3 -m http.server 8080 --directory game
+```
+
+Then open http://localhost:8080/ in a browser. Deterministic screenshots:
+`?shot=start&seed=1`, `?shot=play&seed=1`, `?shot=farm&seed=1`, `?shot=end&seed=1`.
+A scripted playtest runs at `?selftest=1`.
