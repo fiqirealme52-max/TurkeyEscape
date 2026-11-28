@@ -1,70 +1,117 @@
-'use strict';
-/* Deterministic screenshot states: ?shot=start|play|kitchen|end&seed=N.
-   Each one freezes the game on a single readable frame so the
-   screenshots are stable renders of the real game. */
+// Deterministic screenshot branches (?shot= + seed).
+// Each branch sets a fixed, readable game state — no randomness, no
+// Date.now(), no "BEST 0" anywhere (R3.14: best seeded to 10480).
+import { STAGES, stageStartMeters } from './stages.js';
+import { FARMERS, FEATS, PERKS } from './config.js';
+import { createFarmer } from './farmer.js';
+import { createHazards } from './hazards.js';
+import { startRun } from './world.js';
 
-const Shots = {
-  apply(query) {
-    const shot = query.get('shot');
-    if (!shot) return false;
-    const seed = parseInt(query.get('seed') || '1', 10) || 1;
+function seedFeats(w, n) {
+  // Show a mid-campaign feat count on the title (never 0/12 in a shot).
+  const ids = FEATS.slice(0, n).map((f) => f.id);
+  w.featsEarned = new Set(ids);
+  w.featsThisRun = FEATS.slice(0, n);
+}
 
-    if (shot === 'start') {
-      Game.loadBest();
-      Game.screen = 'title';
-      Game.time = 3.2;
-      Game.frozen = true;
-      return true;
-    }
+function seedPerks(w, n) {
+  w.perks = new Set(PERKS.slice(0, n).map((p) => p.id));
+}
 
-    if (shot === 'play') {
-      Game.newRun(seed);
-      Game.frozen = false;
-      /* Farmyard mid-run: turkey sprinting, farmer chasing, knives in the air. */
-      Turkey.x = 330; Turkey.y = CFG.FLOOR - Turkey.h - 40; Turkey.vy = -160;
-      Turkey.face = 1; Turkey.vx = CFG.TURKEY.run;
-      Farmer.x = 190; Farmer.dir = 1; Farmer.state = 'chase'; Farmer.spotFlash = 1;
-      Farmer.lastSeenX = Turkey.x;
-      Hazards.knives = [
-        { x: 420, y: 120, state: 'fall', t: 0.7, w: 16, h: 46 },
-        { x: 560, y: 30, state: 'warn', t: 0.2, w: 16, h: 46 },
-        { x: 700, y: 200, state: 'fall', t: 0.9, w: 16, h: 46 }
-      ];
-      Hazards.corns[1].taken = true;
-      Game.score = 1450; Game.dist = 320; Game.corn = 6; Game.combo = 3; Game.time = 24.5;
-      Game.showBanner('SPOTTED!', 999);
-      Game.frozen = true;
-      return true;
-    }
+export function applyShot(w, search) {
+  const q = new URLSearchParams(search || '');
+  const shot = q.get('shot') || 'start';
+  w.best = Math.max(w.best, 10480);
 
-    if (shot === 'kitchen') {
-      Game.newRun(seed);
-      Game.stage = 2;
-      Game.loadStage(2);
-      /* Kitchen cover: oven lit, farmer right behind the turkey, knife falling. */
-      Turkey.x = 500; Turkey.y = CFG.FLOOR - Turkey.h; Turkey.face = 1; Turkey.vx = CFG.TURKEY.run;
-      Farmer.x = 405; Farmer.dir = 1; Farmer.state = 'chase'; Farmer.spotFlash = 1;
-      Farmer.lastSeenX = Turkey.x;
-      Hazards.knives = [
-        { x: 640, y: 90, state: 'fall', t: 0.6, w: 16, h: 46 },
-        { x: 300, y: 10, state: 'warn', t: 0.2, w: 16, h: 46 }
-      ];
-      Hazards.pins = [{ x: 240, y: CFG.FLOOR - 18, w: 34, h: 18, vx: 260, rot: 0.6 }];
-      Hazards.corns[0].taken = true; Hazards.corns[1].taken = true;
-      Game.score = 3890; Game.dist = 940; Game.corn = 14; Game.combo = 5; Game.time = 68.0;
-      Game.showBanner('SPOTTED!', 999);
-      Game.frozen = true;
-      return true;
-    }
-
-    if (shot === 'end') {
-      Game.newRun(seed);
-      Game.screen = 'escaped';
-      Game.score = 5240; Game.best = 5240; Game.dist = 1200; Game.corn = 18;
-      Game.stage = 2; Game.time = 92.4;
-      Game.frozen = true;
-      return true;
-    }
-    return false;
+  if (shot === 'start') {
+    w.screen = 'title';
+    seedFeats(w, 7);
+    w.escapes = 3;
+    return 'start';
   }
-};
+
+  if (shot === 'play') {
+    // Cover: kitchen (stage 3, the hardest), dense HUD, near-miss beat.
+    startRun(w, 'season');
+    const into = 200;
+    w.distancePx = (stageStartMeters(3) + into) * 40;
+    w.distanceMeters = stageStartMeters(3) + into;
+    w.stageIndex = 2;
+    w.stage = STAGES[2];
+    w.hazards = createHazards(w.rng, STAGES[2]);
+    w.score = 51480;
+    w.corn = 61;
+    w.combo = 5;
+    w.lives = 3;
+    seedPerks(w, 3);
+    seedFeats(w, 7);
+    w.countdown = true;
+    w.countdownShown = true;
+    // Banner shows the stage; the countdown line lives in its own panel
+    // (drawHUD) — showing the same sentence twice looked like a glitch.
+    w.banner = 'STAGE 3 — KITCHEN';
+    w.bannerTimer = 99;
+    w.perkBanner = 'PERK EARNED: Second Wind \u2022 20 corn \u2022 SISA 41 corn';
+    w.perkBannerTimer = 99;
+    w.batchLine = '1 dash \u00b7 3 corn';
+    w.nearMiss = true;
+    w.turkey.x = 300; w.turkey.y = 462;
+    w.turkey.stamina = 72;
+    w.turkey.invulnTimer = 600; // freeze the catch so the cover composition stays put
+    w.farmers = [
+      createFarmer(FARMERS[0], 210, 40, 420),
+      createFarmer(FARMERS[1], 640, 380, 820),
+    ];
+    w.farmers[0].state = 'SEARCH'; w.farmers[0].suspicion = 65; w.farmers[0].dir = 1;
+    w.farmers[1].state = 'PATROL'; w.farmers[1].suspicion = 22; w.farmers[1].dir = -1;
+    return 'play';
+  }
+
+  if (shot === 'farm') {
+    // Farmyard stage 1: route drawn, named area + legend visible.
+    startRun(w, 'season');
+    const into = 120;
+    w.distancePx = into * 40;
+    w.distanceMeters = into;
+    w.stageIndex = 0;
+    w.stage = STAGES[0];
+    w.hazards = createHazards(w.rng, STAGES[0]);
+    w.score = 12480;
+    w.corn = 22; // enough for the next perk (Featherweight 15) with 7 left
+    w.combo = 2;
+    w.lives = 3;
+    seedPerks(w, 1);
+    seedFeats(w, 2);
+    w.turkey.x = 170; w.turkey.y = 462;
+    w.turkey.stamina = 88;
+    w.turkey.invulnTimer = 600; // freeze the catch so the farmyard composition stays put
+    w.farmers = [createFarmer(FARMERS[0], 620, 40, 420)];
+    w.farmers[0].state = 'PATROL'; w.farmers[0].suspicion = 12; w.farmers[0].dir = -1;
+    return 'farm';
+  }
+
+  if (shot === 'end') {
+    // End screen: ESCAPED, 10 stats, feats earned, restart button.
+    startRun(w, 'season');
+    w.distanceMeters = 2400;
+    w.score = 51480;
+    w.corn = 61;
+    w.timeSec = 82;
+    w.counters = { hides: 4, knivesDodged: 12, closeCalls: 6, decoysUsed: 3, ovensPassed: 5, decoyFools: 3, jumps: 41 };
+    seedPerks(w, 6);
+    seedFeats(w, 8);
+    w.escapes = 4;
+    w.best = 51480;
+    w.ending = 'ESCAPED';
+    w.screen = 'escaped';
+    w.endStats = {
+      score: 51480, distance: 2400, time: 82,
+      hides: 4, knives: 12, closeCalls: 6, decoys: 3,
+      best: 51480, perks: 6, feats: 8, escapes: 4,
+    };
+    return 'end';
+  }
+
+  w.screen = 'title';
+  return 'start';
+}
