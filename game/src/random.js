@@ -1,7 +1,6 @@
-'use strict';
-/* Seeded RNG (mulberry32) so screenshot states are deterministic. */
-
-function makeRng(seed) {
+// Seeded RNG only — no Math.random() anywhere in the game, so every
+// screenshot branch and every run with the same seed is reproducible.
+export function mulberry32(seed) {
   let a = seed >>> 0;
   return function () {
     a |= 0; a = (a + 0x6D2B79F5) | 0;
@@ -11,8 +10,29 @@ function makeRng(seed) {
   };
 }
 
-/* Pick an integer in [lo, hi] from rng. */
-function rngInt(rng, lo, hi) { return lo + Math.floor(rng() * (hi - lo + 1)); }
+export function hashSeed(str) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
 
-/* Pick one element of an array from rng. */
-function rngPick(rng, arr) { return arr[Math.floor(rng() * arr.length)]; }
+export function pick(rng, arr) {
+  return arr[Math.floor(rng() * arr.length)];
+}
+
+export function range(rng, min, max) {
+  return min + rng() * (max - min);
+}
+
+// Fisher-Yates with the seeded RNG (deterministic per seed).
+export function shuffle(rng, arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
